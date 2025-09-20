@@ -21,6 +21,11 @@ int main(int argc, char *argv[])
   string input_model;
   params.seed = (unsigned)time(NULL);
 
+  std::cout << "[DEBUG] Entering main" << std::endl;
+  std::cout << "argc: " << argc << std::endl;
+  for (int i = 0; i < argc; ++i)
+    std::cout << "argv[" << i << "]: " << argv[i] << std::endl;
+
   // args
   for (int i = 0; i < argc; ++i)
   {
@@ -113,6 +118,20 @@ int main(int argc, char *argv[])
     }
   }
 
+  std::cout << "Parsed input_model: "
+            << (params.input_model.empty() ? "<none>" : params.input_model)
+            << std::endl;
+  std::cout << "Parsed output_name: "
+            << (params.output_name.empty() ? "<none>" : params.output_name)
+            << std::endl;
+
+  std::ifstream input_check(params.input_model.c_str());
+  if (!input_check.good())
+    std::cout << "[DEBUG] Unable to open input file: " << params.input_model << std::endl;
+  else
+    std::cout << "[DEBUG] Input file opened successfully" << std::endl;
+  input_check.close();
+
   string ext;
   if (params.input_model.length() > 4)
   {
@@ -151,10 +170,19 @@ int main(int argc, char *argv[])
   Model m;
   array<array<double, 3>, 3> rot;
 
+  std::cout << "[DEBUG] Calling SaveConfig" << std::endl;
   SaveConfig(params);
+  std::cout << "[DEBUG] Returned from SaveConfig" << std::endl;
 
-  m.LoadOBJ(params.input_model);
+  std::cout << "[DEBUG] About to LoadOBJ: " << params.input_model << std::endl;
+  bool load_ok = m.LoadOBJ(params.input_model);
+  std::cout << "[DEBUG] LoadOBJ result: " << load_ok
+            << ", points=" << m.points.size()
+            << ", triangles=" << m.triangles.size() << std::endl;
+
+  std::cout << "[DEBUG] Normalizing mesh" << std::endl;
   vector<double> bbox = m.Normalize();
+  std::cout << "[DEBUG] Normalize completed" << std::endl;
   // m.SaveOBJ("normalized.obj");
 
   #if WITH_3RD_PARTY_LIBS
@@ -167,7 +195,7 @@ int main(int argc, char *argv[])
     }
     else if (params.preprocess_mode == "on")
       ManifoldPreprocess(params, m);
-  #else
+#else
     bool is_manifold = IsManifold(m);
     logger::info("Mesh Manifoldness: {}", is_manifold);
     if (!is_manifold)
@@ -176,22 +204,36 @@ int main(int argc, char *argv[])
       exit(0);
     }
 
-  #endif
+#endif
 
+  std::cout << "[DEBUG] Saving remesh output: " << params.remesh_output_name << std::endl;
   m.SaveOBJ(params.remesh_output_name);
+  std::cout << "[DEBUG] Remesh output saved" << std::endl;
 
   if (params.pca)
+  {
+    std::cout << "[DEBUG] Performing PCA" << std::endl;
     rot = m.PCA();
+    std::cout << "[DEBUG] PCA completed" << std::endl;
+  }
 
+  std::cout << "[DEBUG] Starting Compute" << std::endl;
   vector<Model> parts = Compute(m, params);
+  std::cout << "[DEBUG] Compute finished, parts count: " << parts.size() << std::endl;
 
+  std::cout << "[DEBUG] Recovering parts" << std::endl;
   RecoverParts(parts, bbox, rot, params);
+  std::cout << "[DEBUG] RecoverParts finished" << std::endl;
 
   string objName = regex_replace(params.output_name, regex("wrl"), "obj");
   string wrlName = regex_replace(params.output_name, regex("obj"), "wrl");
+  std::cout << "[DEBUG] Output names -> OBJ: " << objName << ", WRL: " << wrlName << std::endl;
 
+  std::cout << "[DEBUG] Calling SaveVRML" << std::endl;
   SaveVRML(wrlName, parts, params);
+  std::cout << "[DEBUG] Calling SaveOBJ" << std::endl;
   SaveOBJ(objName, parts, params);
+  std::cout << "[DEBUG] Finished writing output files" << std::endl;
 
   return 0;
 }

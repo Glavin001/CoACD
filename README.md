@@ -107,6 +107,12 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
 && make main -j
 ```
 
+Or simply run the helper script on Linux/macOS to fetch submodules and build the `main` executable in one step:
+
+```
+bash build_native.sh
+```
+
 On Windows (MSVC):
 
 ```
@@ -121,6 +127,22 @@ We provide a set of default parameters, and you only need to specify the input a
 ```
 
 The generated convex components (in both `.obj` and `.wrl` formats) will be saved in PATH_OF_OUTPUT.
+
+### WebAssembly / Node.js
+
+With [Emscripten](https://emscripten.org) installed you can produce a Node.js-compatible WebAssembly build:
+
+```
+bash build_wasm.sh
+```
+
+This generates `build-wasm/coacd.js` and `coacd.wasm`. The provided `wasm_example.js` wrapper mounts the host filesystem and calls the exposed `coacd_decompose` function so you can run a conversion directly from Node.js:
+
+```
+node wasm_example.js examples/SnowFlake.obj output.wrl
+```
+
+The command above prints detailed debug output and writes `output.wrl` beside the input mesh.
 
 ## Examples
 

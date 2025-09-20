@@ -1,5 +1,6 @@
 outputs/*
 build/*
+build-wasm/*
 dist/*
 wheelhouse/*
 coacd.egg-info/*

@@ -46,6 +46,8 @@ namespace coacd
 
     void SaveOBJ(const string &filename, vector<Model> parts, Params &params)
     {
+        std::cout << "[DEBUG] SaveOBJ -> " << filename
+                  << " with parts: " << parts.size() << std::endl;
         vector<int> v_numbers;
         v_numbers.push_back(0);
         std::ofstream os(filename);
@@ -65,6 +67,7 @@ namespace coacd
             }
         }
         os.close();
+        std::cout << "[DEBUG] SaveOBJ complete" << std::endl;
     }
 
     void SaveOBJs(const string &foldername, const string &filename, vector<Model> parts, Params &params)
@@ -169,6 +172,8 @@ namespace coacd
 
     void SaveVRML(const string &fileName, vector<Model>& meshes, Params &params)
     {
+        std::cout << "[DEBUG] SaveVRML -> " << fileName
+                  << " with meshes: " << meshes.size() << std::endl;
         ofstream foutCH(fileName);
         if (foutCH.is_open())
         {
@@ -177,6 +182,11 @@ namespace coacd
                 WriteVRML(foutCH, meshes[p]);
             }
             foutCH.close();
+            std::cout << "[DEBUG] SaveVRML complete" << std::endl;
+        }
+        else
+        {
+            std::cout << "[DEBUG] Failed to open " << fileName << " for VRML output" << std::endl;
         }
     }
 }

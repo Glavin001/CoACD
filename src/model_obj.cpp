@@ -461,11 +461,13 @@ namespace coacd
 
     bool Model::LoadOBJ(const string &fileName)
     {
+        std::cout << "[DEBUG] Model::LoadOBJ reading " << fileName << std::endl;
         const unsigned int BufferSize = 1024;
         FILE *fid = fopen(fileName.c_str(), "r");
 
         if (fid)
         {
+            std::cout << "[DEBUG] fopen succeeded" << std::endl;
             char buffer[BufferSize];
             int ip[4];
             double x[3];
@@ -544,9 +546,12 @@ namespace coacd
             bbox[5] = z_max;
 
             fclose(fid);
+            std::cout << "[DEBUG] Model::LoadOBJ read " << points.size()
+                      << " points and " << triangles.size() << " triangles" << std::endl;
         }
         else
         {
+            std::cout << "[DEBUG] fopen failed" << std::endl;
             logger::error("Open File Error!");
             return false;
         }
