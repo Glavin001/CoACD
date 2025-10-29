@@ -136,13 +136,29 @@ With [Emscripten](https://emscripten.org) installed you can produce a Node.js-co
 bash build_wasm.sh
 ```
 
-This generates `build-wasm/coacd.js` and `coacd.wasm`. The provided `wasm_example.js` wrapper mounts the host filesystem and calls the exposed `coacd_decompose` function so you can run a conversion directly from Node.js:
+This generates a single-file bundle at `build-wasm/coacd.js`. The provided `wasm_example.js` wrapper mounts the host filesystem and calls the exposed `coacd_decompose` function so you can run a conversion directly from Node.js:
 
 ```
-node wasm_example.js examples/SnowFlake.obj output.wrl
+node wasm_example.js examples/SnowFlake.obj output.wrl -t 0.02 -pm off -s 1234
 ```
 
-The command above prints detailed debug output and writes `output.wrl` beside the input mesh.
+The wrapper accepts a subset of the native CLI flags, including `--threshold/-t`,
+`--preprocess-mode/-pm`, the `-np` shortcut (for `--preprocess-mode off`), and
+`--seed/-s` for deterministic runs. The command above prints detailed debug output and writes `output.wrl` beside the input mesh.
+
+To verify parity with the native executable for every sample mesh, ensure
+`build-no3rd/main` (built via `cmake -S . -B build-no3rd -DWITH_3RD_PARTY_LIBS=OFF`)
+and `build-wasm/coacd.js` exist and then run:
+
+```
+node wasm_verify_examples.js
+```
+
+This script converts all `examples/*.obj` files with both implementations and
+confirms that the generated `.wrl` and `.obj` assets match byte-for-byte.
+When third-party preprocessing libraries are unavailable (the WebAssembly and
+`WITH_3RD_PARTY_LIBS=OFF` builds), non-manifold meshes are approximated with a
+single convex hull so both implementations return identical geometry.
 
 ## Examples
 

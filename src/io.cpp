@@ -1,6 +1,9 @@
 #include "io.h"
 #include "logger.h"
 
+#include <cmath>
+#include <random>
+
 namespace coacd
 {
     void SaveConfig(Params params)
@@ -92,17 +95,61 @@ namespace coacd
         }
     }
 
-    bool WriteVRML(ofstream &fout, Model mesh)
-    {
-        Material material;
-        material.m_diffuseColor[0] = material.m_diffuseColor[1] = material.m_diffuseColor[2] = 0.0f;
-        while (material.m_diffuseColor[0] == material.m_diffuseColor[1] || material.m_diffuseColor[2] == material.m_diffuseColor[1] || material.m_diffuseColor[2] == material.m_diffuseColor[0])
+    namespace {
+
+        Material GenerateMaterial(unsigned int base_seed, int part_index)
         {
-            material.m_diffuseColor[0] = (rand() % 100) / 100.0f;
-            material.m_diffuseColor[1] = (rand() % 100) / 100.0f;
-            material.m_diffuseColor[2] = (rand() % 100) / 100.0f;
+            Material material;
+            struct SimpleRng
+            {
+                explicit SimpleRng(uint32_t seed)
+                    : state(seed == 0 ? 1u : seed) {}
+
+                uint32_t next()
+                {
+                    state = state * 1664525u + 1013904223u;
+                    return state;
+                }
+
+                float nextColor()
+                {
+                    return static_cast<float>(next() % 100u) / 100.0f;
+                }
+
+                uint32_t state;
+            };
+
+            uint32_t mix = base_seed ^ (0x9E3779B9u * (static_cast<uint32_t>(part_index) + 1u));
+            SimpleRng rng(mix);
+
+            auto sample_component = [&]() {
+                return rng.nextColor();
+            };
+
+            for (int attempt = 0; attempt < 16; ++attempt)
+            {
+                material.m_diffuseColor[0] = sample_component();
+                material.m_diffuseColor[1] = sample_component();
+                material.m_diffuseColor[2] = sample_component();
+
+                if (material.m_diffuseColor[0] != material.m_diffuseColor[1] &&
+                    material.m_diffuseColor[1] != material.m_diffuseColor[2] &&
+                    material.m_diffuseColor[0] != material.m_diffuseColor[2])
+                {
+                    return material;
+                }
+            }
+
+            // Fallback to fixed offsets if the RNG happened to hit identical components repeatedly.
+            material.m_diffuseColor[1] = std::nextafter(material.m_diffuseColor[1], 1.0f);
+            material.m_diffuseColor[2] = std::nextafter(material.m_diffuseColor[2], 1.0f);
+            return material;
         }
 
+    } // namespace
+
+    bool WriteVRML(ofstream &fout, Model mesh, const Material &material)
+    {
         int nPoints = (int)mesh.points.size();
         int nTriangles = (int)mesh.triangles.size();
         if (fout.is_open())
@@ -177,9 +224,11 @@ namespace coacd
         ofstream foutCH(fileName);
         if (foutCH.is_open())
         {
+            unsigned int seed = params.seed == 0 ? 1u : params.seed;
             for (int p = 0; p < (int)meshes.size(); ++p)
             {
-                WriteVRML(foutCH, meshes[p]);
+                Material material = GenerateMaterial(seed, p);
+                WriteVRML(foutCH, meshes[p], material);
             }
             foutCH.close();
             std::cout << "[DEBUG] SaveVRML complete" << std::endl;

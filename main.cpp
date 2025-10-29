@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
   params.threshold = min(max(params.threshold, 0.01), 1.0);
 
   Model m;
-  array<array<double, 3>, 3> rot;
+  array<array<double, 3>, 3> rot{{{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
   std::cout << "[DEBUG] Calling SaveConfig" << std::endl;
   SaveConfig(params);
@@ -183,6 +183,7 @@ int main(int argc, char *argv[])
   std::cout << "[DEBUG] Normalizing mesh" << std::endl;
   vector<double> bbox = m.Normalize();
   std::cout << "[DEBUG] Normalize completed" << std::endl;
+  bool use_convex_fallback = false;
   // m.SaveOBJ("normalized.obj");
 
   #if WITH_3RD_PARTY_LIBS
@@ -200,8 +201,12 @@ int main(int argc, char *argv[])
     logger::info("Mesh Manifoldness: {}", is_manifold);
     if (!is_manifold)
     {
-      logger::critical("The mesh is not a 2-manifold! Please enable WITH_3RD_PARTY_LIBS during compilation, or use third-party libraries to preprocess the mesh.");
-      exit(0);
+      logger::warn("The mesh is not a 2-manifold; approximating with a single convex hull because WITH_3RD_PARTY_LIBS=OFF.");
+      use_convex_fallback = true;
+    }
+    else if (params.preprocess_mode == std::string("on"))
+    {
+      logger::warn("Preprocess mode 'on' requested but third-party preprocessing is unavailable; continuing without preprocessing.");
     }
 
 #endif
@@ -218,8 +223,19 @@ int main(int argc, char *argv[])
   }
 
   std::cout << "[DEBUG] Starting Compute" << std::endl;
-  vector<Model> parts = Compute(m, params);
-  std::cout << "[DEBUG] Compute finished, parts count: " << parts.size() << std::endl;
+  vector<Model> parts;
+  if (use_convex_fallback)
+  {
+    Model convex;
+    m.ComputeCH(convex);
+    parts.push_back(convex);
+    std::cout << "[DEBUG] Convex fallback produced 1 part" << std::endl;
+  }
+  else
+  {
+    parts = Compute(m, params);
+    std::cout << "[DEBUG] Compute finished, parts count: " << parts.size() << std::endl;
+  }
 
   std::cout << "[DEBUG] Recovering parts" << std::endl;
   RecoverParts(parts, bbox, rot, params);
