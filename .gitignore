@@ -4,9 +4,13 @@ build-no3rd/
 build-wasm/*
 emsdk/
 dist/*
+ts/dist/
 wheelhouse/*
 coacd.egg-info/*
 *obj
 *wrl
 *ply
 *DS_Store
+ts/node_modules/
+ts/wasm/*
+!ts/wasm/README.md

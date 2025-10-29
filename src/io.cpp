@@ -148,73 +148,69 @@ namespace coacd
 
     } // namespace
 
-    bool WriteVRML(ofstream &fout, Model mesh, const Material &material)
+    bool WriteVRML(std::ostream &fout, Model mesh, const Material &material)
     {
         int nPoints = (int)mesh.points.size();
         int nTriangles = (int)mesh.triangles.size();
-        if (fout.is_open())
-        {
-            fout.setf(ios::fixed, ios::floatfield);
-            fout.setf(ios::showpoint);
-            fout.precision(6);
-            fout << "#VRML V2.0 utf8" << endl;
-            fout << "" << endl;
-            fout << "# Vertices: " << nPoints << endl;
-            fout << "# Triangles: " << nTriangles << endl;
-            fout << "" << endl;
-            fout << "Group {" << endl;
-            fout << "    children [" << endl;
-            fout << "        Shape {" << endl;
-            fout << "            appearance Appearance {" << endl;
-            fout << "                material Material {" << endl;
-            fout << "                    diffuseColor " << material.m_diffuseColor[0] << " "
-                 << material.m_diffuseColor[1] << " "
-                 << material.m_diffuseColor[2] << endl;
-            fout << "                    ambientIntensity " << material.m_ambientIntensity << endl;
-            fout << "                    specularColor " << material.m_specularColor[0] << " "
-                 << material.m_specularColor[1] << " "
-                 << material.m_specularColor[2] << endl;
-            fout << "                    emissiveColor " << material.m_emissiveColor[0] << " "
-                 << material.m_emissiveColor[1] << " "
-                 << material.m_emissiveColor[2] << endl;
-            fout << "                    shininess " << material.m_shininess << endl;
-            fout << "                    transparency " << material.m_transparency << endl;
-            fout << "                }" << endl;
-            fout << "            }" << endl;
-            fout << "            geometry IndexedFaceSet {" << endl;
-            fout << "                ccw TRUE" << endl;
-            fout << "                solid TRUE" << endl;
-            fout << "                convex TRUE" << endl;
-            if (nPoints > 0)
-            {
-                fout << "                coord DEF co Coordinate {" << endl;
-                fout << "                    point [" << endl;
-                for (int i = 0; i < nPoints; i++)
-                    fout << "                        " << mesh.points[i][0] << " "
-                         << mesh.points[i][1] << " "
-                         << mesh.points[i][2] << "," << endl;
-                fout << "                    ]" << endl;
-                fout << "                }" << endl;
-            }
-            if (nTriangles > 0)
-            {
-                fout << "                coordIndex [ " << endl;
-                for (int i = 0; i < nTriangles; i++)
-                    fout << "                        " << mesh.triangles[i][0] << ", "
-                         << mesh.triangles[i][1] << ", "
-                         << mesh.triangles[i][2] << ", -1," << endl;
-                fout << "                ]" << endl;
-            }
-            fout << "            }" << endl;
-            fout << "        }" << endl;
-            fout << "    ]" << endl;
-            fout << "}" << endl;
-            return true;
-        }
-        else
-        {
+        if (!fout.good())
             return false;
+
+        fout.setf(ios::fixed, ios::floatfield);
+        fout.setf(ios::showpoint);
+        fout.precision(6);
+        fout << "#VRML V2.0 utf8" << endl;
+        fout << "" << endl;
+        fout << "# Vertices: " << nPoints << endl;
+        fout << "# Triangles: " << nTriangles << endl;
+        fout << "" << endl;
+        fout << "Group {" << endl;
+        fout << "    children [" << endl;
+        fout << "        Shape {" << endl;
+        fout << "            appearance Appearance {" << endl;
+        fout << "                material Material {" << endl;
+        fout << "                    diffuseColor " << material.m_diffuseColor[0] << " "
+             << material.m_diffuseColor[1] << " "
+             << material.m_diffuseColor[2] << endl;
+        fout << "                    ambientIntensity " << material.m_ambientIntensity << endl;
+        fout << "                    specularColor " << material.m_specularColor[0] << " "
+             << material.m_specularColor[1] << " "
+             << material.m_specularColor[2] << endl;
+        fout << "                    emissiveColor " << material.m_emissiveColor[0] << " "
+             << material.m_emissiveColor[1] << " "
+             << material.m_emissiveColor[2] << endl;
+        fout << "                    shininess " << material.m_shininess << endl;
+        fout << "                    transparency " << material.m_transparency << endl;
+        fout << "                }" << endl;
+        fout << "            }" << endl;
+        fout << "            geometry IndexedFaceSet {" << endl;
+        fout << "                ccw TRUE" << endl;
+        fout << "                solid TRUE" << endl;
+        fout << "                convex TRUE" << endl;
+        if (nPoints > 0)
+        {
+            fout << "                coord DEF co Coordinate {" << endl;
+            fout << "                    point [" << endl;
+            for (int i = 0; i < nPoints; i++)
+                fout << "                        " << mesh.points[i][0] << " "
+                     << mesh.points[i][1] << " "
+                     << mesh.points[i][2] << "," << endl;
+            fout << "                    ]" << endl;
+            fout << "                }" << endl;
         }
+        if (nTriangles > 0)
+        {
+            fout << "                coordIndex [ " << endl;
+            for (int i = 0; i < nTriangles; i++)
+                fout << "                        " << mesh.triangles[i][0] << ", "
+                     << mesh.triangles[i][1] << ", "
+                     << mesh.triangles[i][2] << ", -1," << endl;
+            fout << "                ]" << endl;
+        }
+        fout << "            }" << endl;
+        fout << "        }" << endl;
+        fout << "    ]" << endl;
+        fout << "}" << endl;
+        return fout.good();
     }
 
     void SaveVRML(const string &fileName, vector<Model>& meshes, Params &params)
@@ -237,5 +233,40 @@ namespace coacd
         {
             std::cout << "[DEBUG] Failed to open " << fileName << " for VRML output" << std::endl;
         }
+    }
+
+    std::string ExportOBJString(const vector<Model> &parts, Params &params)
+    {
+        std::ostringstream os;
+        vector<int> v_numbers;
+        v_numbers.push_back(0);
+        for (int n = 0; n < (int)parts.size(); n++)
+        {
+            os << "o convex_" << n << endl;
+            for (int i = 0; i < (int)parts[n].points.size(); ++i)
+            {
+                os << "v " << parts[n].points[i][0] << " " << parts[n].points[i][1] << " " << parts[n].points[i][2] << "\n";
+            }
+            v_numbers.push_back(v_numbers[n] + (int)parts[n].points.size());
+            for (int i = 0; i < (int)parts[n].triangles.size(); ++i)
+            {
+                os << "f " << parts[n].triangles[i][0] + 1 + v_numbers[n]
+                   << " " << parts[n].triangles[i][1] + 1 + v_numbers[n]
+                   << " " << parts[n].triangles[i][2] + 1 + v_numbers[n] << "\n";
+            }
+        }
+        return os.str();
+    }
+
+    std::string ExportVRMLString(const vector<Model> &meshes, Params &params)
+    {
+        std::ostringstream out;
+        unsigned int seed = params.seed == 0 ? 1u : params.seed;
+        for (int p = 0; p < (int)meshes.size(); ++p)
+        {
+            Material material = GenerateMaterial(seed, p);
+            WriteVRML(out, meshes[p], material);
+        }
+        return out.str();
     }
 }

@@ -16,6 +16,7 @@
 #include <set>
 #include <map>
 #include <unordered_map>
+#include <ostream>
 
 #include "shape.h"
 #include "model_obj.h"
@@ -33,6 +34,8 @@ namespace coacd
     void SaveConfig(Params params);
     void SaveOBJ(const string &filename, vector<Model> parts, Params &params);
     void SaveOBJs(const string &foldername, const string &filename, vector<Model> parts, Params &params);
-    bool WriteVRML(ofstream &fout, Model mesh);
+    bool WriteVRML(std::ostream &fout, Model mesh, const Material &material);
     void SaveVRML(const string &fileName, vector<Model>& meshes, Params &params);
+    std::string ExportOBJString(const vector<Model> &parts, Params &params);
+    std::string ExportVRMLString(const vector<Model> &meshes, Params &params);
 }
