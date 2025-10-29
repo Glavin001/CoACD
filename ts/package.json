@@ -1,0 +1,17 @@
+{
+  "name": "@coacd/wasm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Strongly typed TypeScript bindings for the CoACD convex decomposition WebAssembly module.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ./scripts/copy-wasm.mjs",
+    "clean": "rimraf dist",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.0"
+  }
+}

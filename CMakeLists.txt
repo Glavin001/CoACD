@@ -87,22 +87,23 @@ endif()
 
 if(EMSCRIPTEN)
     add_executable(coacd_wasm coacd_wasm.cpp)
-    set(CMAKE_EXECUTABLE_SUFFIX ".js")
-    set_target_properties(coacd_wasm PROPERTIES OUTPUT_NAME coacd)
+    set(CMAKE_EXECUTABLE_SUFFIX ".mjs")
+    set_target_properties(coacd_wasm PROPERTIES OUTPUT_NAME coacd-wasm)
     target_link_libraries(coacd_wasm coacd)
     target_link_options(coacd_wasm PRIVATE
-        "-sENVIRONMENT=node"
+        "--bind"
+        "-sENVIRONMENT=web,worker,node"
         "-sALLOW_MEMORY_GROWTH=1"
-        "-sFORCE_FILESYSTEM=1"
-        "-lnodefs.js"
-        "-sSINGLE_FILE=1"
+        "-sNO_FILESYSTEM=1"
         "-sMODULARIZE=1"
-        "-sEXPORT_ES6=0"
-        "-sASSERTIONS=2"
+        "-sEXPORT_ES6=1"
+        "-sASSERTIONS=1"
         "-sSTACK_OVERFLOW_CHECK=2"
-        "-sEXIT_RUNTIME=1"
-        "-sEXPORTED_FUNCTIONS=['_coacd_decompose','_coacd_reset_params','_coacd_set_threshold','_coacd_set_preprocess_mode','_coacd_set_seed']"
-        "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall','FS','NODEFS']"
+        "-sEXIT_RUNTIME=0"
+        "-sDISABLE_EXCEPTION_CATCHING=0"
+        "-sWASM=1"
+        "-sEXPORT_NAME=CoACDModule"
+        "--emit-tsd=coacd-wasm.d.ts"
         "--no-entry")
 else()
     add_executable(main main.cpp)
