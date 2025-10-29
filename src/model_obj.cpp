@@ -1,3 +1,4 @@
+#include <random>
 #include <stdint.h>
 #include "model_obj.h"
 #include "process.h"
@@ -371,18 +372,24 @@ namespace coacd
             else
                 N = max(int(i % 2 == 0), int(resolution / aObj * area));
 
-            std::uniform_int_distribution<int> seeder(0, 1000);
-            int seed = seeder(coacd::random_engine);
+            auto next_random_u32 = []() -> uint32_t {
+                return coacd::random_engine();
+            };
+            auto next_unit_double = [&]() -> double {
+                return static_cast<double>(next_random_u32()) /
+                       static_cast<double>(std::mt19937::max());
+            };
+
+            int seed = static_cast<int>(next_random_u32() % 1001u);
             float r[2];
             for (int k = 0; k < N; k++)
             {
                 double a, b;
                 if (k % 3 == 0)
                 {
-                    std::uniform_real_distribution<double> uniform(0.0, 1.0);
                     //// random sample
-                    a = uniform(coacd::random_engine);
-                    b = uniform(coacd::random_engine);
+                    a = next_unit_double();
+                    b = next_unit_double();
                 }
                 else
                 {

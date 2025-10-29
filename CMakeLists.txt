@@ -34,6 +34,11 @@ else()
     endif()
 endif()
 
+if(EMSCRIPTEN)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-warning-option -Wno-error=unknown-warning-option")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning-option -Wno-error=unknown-warning-option")
+endif()
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 
@@ -66,7 +71,7 @@ endif()
 
 if(NOT EMSCRIPTEN)
     find_package(OpenMP)
-    if (OpenMP_CXX_FOUND)
+    if (OpenMP_CXX_FOUND AND WITH_3RD_PARTY_LIBS)
         target_link_libraries(coacd PUBLIC OpenMP::OpenMP_CXX)
     endif()
 
@@ -75,12 +80,9 @@ if(NOT EMSCRIPTEN)
 endif()
 set_target_properties(coacd PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
-add_library(_coacd SHARED "public/coacd.cpp")
-
 if(WITH_3RD_PARTY_LIBS)
+    add_library(_coacd SHARED "public/coacd.cpp")
     target_link_libraries(_coacd PRIVATE coacd spdlog::spdlog openvdb_static)
-else()
-    target_link_libraries(_coacd PRIVATE coacd)
 endif()
 
 if(EMSCRIPTEN)
@@ -94,12 +96,13 @@ if(EMSCRIPTEN)
         "-sFORCE_FILESYSTEM=1"
         "-lnodefs.js"
         "-sSINGLE_FILE=1"
+        "-sMODULARIZE=1"
+        "-sEXPORT_ES6=0"
         "-sASSERTIONS=2"
-        "-sSAFE_HEAP=1"
         "-sSTACK_OVERFLOW_CHECK=2"
         "-sEXIT_RUNTIME=1"
-        "-sEXPORTED_FUNCTIONS=['_coacd_decompose']"
-        "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall']"
+        "-sEXPORTED_FUNCTIONS=['_coacd_decompose','_coacd_reset_params','_coacd_set_threshold','_coacd_set_preprocess_mode','_coacd_set_seed']"
+        "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall','FS','NODEFS']"
         "--no-entry")
 else()
     add_executable(main main.cpp)

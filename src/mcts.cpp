@@ -629,7 +629,12 @@ namespace coacd
 
         if (shuffle)
         {
-            std::shuffle(planes.begin(), planes.end(), coacd::random_engine);
+            for (size_t i = planes.size(); i > 1; --i)
+            {
+                uint32_t r = coacd::random_engine();
+                size_t j = r % i;
+                std::swap(planes[i - 1], planes[j]);
+            }
         }
     }
 

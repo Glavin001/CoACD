@@ -75,6 +75,7 @@ std::vector<Mesh> CoACD(Mesh const &input, double threshold,
   vector<double> bbox = m.Normalize();
   array<array<double, 3>, 3> rot{
       {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
+  bool use_convex_fallback = false;
 
   if (params.preprocess_mode == std::string("auto")) {
     bool is_manifold = IsManifold(m);
@@ -83,13 +84,31 @@ std::vector<Mesh> CoACD(Mesh const &input, double threshold,
       ManifoldPreprocess(params, m);
   } else if (params.preprocess_mode == std::string("on")) {
     ManifoldPreprocess(params, m);
+#if !WITH_3RD_PARTY_LIBS
+  } else {
+    bool is_manifold = IsManifold(m);
+    logger::info("Mesh Manifoldness: {}", is_manifold);
+    if (!is_manifold) {
+      logger::warn(
+          "The mesh is not a 2-manifold; approximating with a single convex hull "
+          "because WITH_3RD_PARTY_LIBS=OFF.");
+      use_convex_fallback = true;
+    }
+#endif
   }
 
   if (pca) {
     rot = m.PCA();
   }
 
-  vector<Model> parts = Compute(m, params);
+  vector<Model> parts;
+  if (use_convex_fallback) {
+    Model convex;
+    m.ComputeCH(convex);
+    parts.push_back(convex);
+  } else {
+    parts = Compute(m, params);
+  }
   RecoverParts(parts, bbox, rot);
 
   std::vector<Mesh> result;
